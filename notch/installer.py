@@ -10,7 +10,7 @@ from .config import DATA_DIR, STARTUP_LNK, set_startup
 
 UNINSTALL_KEY = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\Notch"
 START_MENU_LNK = os.path.join(os.environ.get("APPDATA", ""), r"Microsoft\Windows\Start Menu\Programs", "Notch.lnk")
-VERSION = "2.4.1"
+VERSION = "2.5.0"
 
 MB_YESNO, MB_ICONQUESTION, MB_ICONINFO, IDYES = 0x4, 0x20, 0x40, 6
 

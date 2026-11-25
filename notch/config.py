@@ -33,6 +33,10 @@ DEFAULTS = {
     "web_pins": [],
     "record_mic": False,
     "quiet": False,             # no notification popups
+    # updates
+    "auto_update": "ask",       # ask | auto | off
+    "update_last_check": 0,
+    "update_skip": "",          # a version Windows wouldn't let run here: don't retry it every day
     # widgets (phase 4)
     "widgets": ["system", "world", "progress", "prices"],
     "desktop_widgets": [],

@@ -13,6 +13,7 @@ psutil==7.2.2
 segno==1.6.6
 tzdata==2026.6
 truststore==0.10.5
+cryptography==50.0.2
 
 # Building the installer only
 pyinstaller==6.22.3

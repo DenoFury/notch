@@ -27,6 +27,10 @@ def _entry():
     _https_like_windows()
     args = sys.argv[1:]
     # helper modes of the packaged Notch.exe (also work from source)
+    if args[:1] == ["--version"]:            # Setup's "can this build start at all?" check
+        from notch.installer import VERSION
+        print(VERSION)
+        return 0
     if args[:1] == ["--guard"]:
         from notch import taskbar_guard
         return taskbar_guard.main(int(args[1]))

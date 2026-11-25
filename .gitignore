@@ -9,5 +9,10 @@ dist/
 build/
 *.spec
 
+# Signing keys never go in the repo (the release key lives in %USERPROFILE%\.notch-release)
+*.pem
+*.key
+.notch-release/
+
 # Logs and local data
 *.log

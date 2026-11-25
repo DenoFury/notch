@@ -50,7 +50,8 @@ def main():
                 "--exclude-module", "PySide6.QtQuick", "--exclude-module", "PySide6.QtPdf",
                 "--exclude-module", "PySide6.QtWebEngineCore",
                 "--collect-submodules", "segno", "--collect-data", "tzdata",
-                "--hidden-import", "truststore", "--hidden-import", "win32pdh",
+                "--hidden-import", "truststore", "--hidden-import", "win32pdh", "--hidden-import", "notch.updater",
+                "--collect-submodules", "cryptography.hazmat.primitives.asymmetric",
                 "--hidden-import", "PySide6.QtMultimedia", "--hidden-import", "PySide6.QtMultimediaWidgets",
                 "--exclude-module", "PySide6.QtWebEngineWidgets", "--exclude-module", "PySide6.QtWebEngineQuick")
     folder = os.path.join(app_dist, "Notch")
@@ -68,7 +69,11 @@ def main():
 
     # 2) zip it as the installer's payload
     payload = os.path.join(WORK, "notch_app.zip")
+    import re
+    version = re.search(r'VERSION = "([^"]+)"', open(os.path.join(ROOT, "notch", "installer.py"),
+                                                    encoding="utf-8").read()).group(1)
     with zipfile.ZipFile(payload, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr("version.txt", version)
         for root, _, files in os.walk(folder):
             for f in files:
                 full = os.path.join(root, f)

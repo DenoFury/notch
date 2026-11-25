@@ -15,8 +15,9 @@ Notch sits at the top of your screen as a small black pill. It shows what's play
 Get **`Notch-Setup.exe`** from the [latest release](../../releases/latest) and run it. No admin rights are needed: Notch installs for your user only.
 
 - On the first run Windows may show **"Windows protected your PC"**, because the installer isn't code-signed. Click **More info → Run anyway**.
+- If **Smart App Control** is on (Windows Security › App & browser control), Windows may block Notch entirely, because it isn't code-signed yet. Setup tells you if that happens and leaves nothing half-installed.
 - Setup asks whether Notch should start with Windows, then starts it.
-- To update, run a newer `Notch-Setup.exe`. It replaces the old version and keeps your settings.
+- **Automatic updates:** Notch checks this repository's releases once a day. When a new version is out it asks before installing, or installs by itself if you choose that in Settings › Updates. Every update must carry the developer's signature, and Setup checks that Windows will run the new version before replacing the old one.
 - To remove it: **Settings → Apps → Installed apps → Notch → Uninstall**. Windows' own taskbar comes back exactly as it was.
 
 Requires Windows 10 or 11 (64-bit). A few extras (Wi-Fi/Bluetooth toggles, some icons) work best on Windows 11.

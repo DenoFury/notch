@@ -148,6 +148,30 @@ class SettingsWindow(QWidget):
         self.switch(g, "Pause on battery", "wallpaper_pause_battery")
         self.switch(g, "Pause when a window covers the screen", "wallpaper_pause_covered")
 
+        g = self.group("UPDATES")
+        self.combo(g, "Updates", "auto_update", {"Ask me first": "ask", "Install automatically": "auto",
+                                                 "Off": "off"})
+        from PySide6.QtWidgets import QPushButton as _Btn
+        chk = _Btn("Check now")
+        chk.setCursor(Qt.PointingHandCursor)
+        chk.setStyleSheet("QPushButton{background:#2a2a2e;color:#f2f2f5;border:1px solid #34343a;border-radius:8px;"
+                          "padding:5px 12px;}")
+        up = app.updater
+        self._upd_status = QLabel(f"Version {app.version}")
+        self._upd_status.setProperty("dim", True)
+        self._upd_status.setFont(font(11))
+        up.status.connect(self._upd_status.setText)
+        chk.clicked.connect(lambda: up.check(manual=True))
+        self.row(g, f"Notch {app.version}", chk,
+                 desc="Updates come from the project's GitHub releases and are only installed if they carry "
+                      "the developer's signature.")
+        g.addWidget(self._upd_status)
+        if up.ready:
+            b = _Btn(f"Install version {up.ready[0]}")
+            b.setStyleSheet(chk.styleSheet())
+            b.clicked.connect(app.install_update)
+            self.row(g, "An update is ready", b)
+
         g = self.group("MUSIC")
         self.switch(g, "Synced lyrics", "lyrics",
                     desc="Looks up the playing song's title, artist and length on lrclib.net, once per song. "

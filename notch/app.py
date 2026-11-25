@@ -106,6 +106,17 @@ class NotchApp:
         self.uptime = UptimeWatch(self)
         self.price_alerts = PriceAlerts(self)
         self.widget_host = WidgetHost(self)
+        from .installer import VERSION
+        from .updater import Updater
+        self.version = VERSION
+        self.updater = Updater(self, VERSION)
+        self.updater.available.connect(self.on_update_ready)
+        note = self.updater.take_failure_note()
+        if note:
+            QTimer.singleShot(3000, lambda: self.island.show_hud(
+                {"kind": "message", "glyph": "", "color": AMBER, "sub": "Update not installed",
+                 "title": f"Windows blocked Notch {note.get('version', '')}: {note.get('reason', '')}",
+                 "body": f"You're still on {VERSION}, which keeps working.", "w": 460, "h": 76}, 10))
 
         self._make_tray()
         self._update_album_color()      # the cover may have loaded before we were listening
@@ -292,6 +303,25 @@ class NotchApp:
     def web_panel_released(self):
         self._web = None
         self._trim_timer.start(5000)
+
+    # ------------------------------------------------------------ updates
+    def on_update_ready(self, version):
+        self._update_action.setText(f"Update to {version}")
+        self._update_action.setVisible(True)
+        if self.settings["auto_update"] == "auto":
+            self.island.show_hud({"kind": "message", "glyph": "", "sub": "Updating Notch",
+                                  "title": f"Installing version {version}…", "w": 340, "h": 60}, 4)
+            QTimer.singleShot(3500, self.install_update)
+            return
+        self.island.show_hud({"kind": "message", "glyph": "", "sub": "Update ready",
+                              "title": f"Notch {version} is ready", "w": 420, "h": 64,
+                              "buttons": [("Update", self.install_update), ("Later", self.island.clear_hud)]}, 20)
+
+    def install_update(self):
+        self.island.clear_hud()
+        if self.updater.install():
+            # the installer closes this Notch and starts the new one; leave tidily first
+            QTimer.singleShot(400, self.qapp.quit)
 
     def on_notification(self, n):
         if not self.settings["notifications"] or self.settings["quiet"]:
@@ -520,6 +550,9 @@ class NotchApp:
         menu.addAction(a)
         b = QAction("Open island", menu, triggered=lambda: self.island.set_expanded(True))
         menu.addAction(b)
+        self._update_action = QAction("Update", menu, triggered=self.install_update)
+        self._update_action.setVisible(False)
+        menu.addAction(self._update_action)
         menu.addSeparator()
         menu.addAction(QAction("Quit", menu, triggered=self.qapp.quit))
         self._menu = menu

@@ -25,6 +25,15 @@ So you can judge it yourself:
   - File names are cleaned: no folders, invisible direction characters or reserved names, and nothing is overwritten. There's a size limit, and 2 GB of disk is always kept free.
 - The optional **Web** panel uses Qt WebEngine (Chromium) with its sandbox. Downloads, pop-up windows and permission requests (camera, location…) are not granted.
 
+## Updates
+
+- Notch asks `api.github.com` for this repository's latest release once a day. One small request carries no data about you.
+- A release must contain `Notch-Setup.exe` and `Notch-Setup.exe.sig`. The `.sig` file holds the version, the installer's SHA-256 and an **Ed25519 signature** over both.
+- The public key is built into the app (`notch/updater.py`). The private key never leaves the developer's PC, so a compromised GitHub account or a swapped download can't produce an update the app accepts.
+- The app refuses an update if the signature doesn't verify, if the download's SHA-256 differs, if the signed version isn't newer than the installed one (no downgrades), or if the file changed on disk between verification and launch.
+- Setup unpacks the new version beside the old one and first checks that Windows lets it start. Only then does it swap them, so a blocked or broken update never leaves you without a working Notch.
+- Updates only run in the installed app, never when running from source. They can be turned off in Settings › Updates.
+
 ## Building
 
 The installer is not code-signed, so Windows SmartScreen warns on first run. You can always build it yourself from this source with `packaging\build.py`.
