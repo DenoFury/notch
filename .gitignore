@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output (the installer goes on the Releases page, not in the repo)
+dist/
+build/
+*.spec
+
+# Logs and local data
+*.log
