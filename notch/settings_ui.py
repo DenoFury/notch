@@ -70,6 +70,10 @@ class SettingsWindow(QWidget):
         self.switch(g, "Notch taskbar", "taskbar",
                     desc="A taskbar along the bottom of the main screen: Start, your pinned and open apps, "
                          "the song playing, the timer, quick settings and the clock. Right-click an app to pin it.")
+        self.combo(g, "When a window is maximised", "taskbar_space",
+                   {"Hide the bar (touch the bottom edge to show it)": "autohide",
+                    "Bar floats over the window": "float",
+                    "Keep space for the bar": "reserve"})
         self.switch(g, "Hide Windows' taskbar", "taskbar_hide_windows",
                     desc="Windows' own taskbar comes back as it was when you turn this off or Notch closes. "
                          "The ^ button on the notch taskbar shows it briefly for its tray icons.")

@@ -84,6 +84,9 @@ DEFAULTS = {
     "taskbar_dock_size": 1.4,
     "taskbar_previews": True,
     "taskbar_scale": 1.0,
+    # what maximised windows do: "autohide" = use the whole screen, the bar slides away and comes back
+    # at the bottom edge; "float" = use the whole screen, the bar stays on top; "reserve" = keep a strip free
+    "taskbar_space": "autohide",
     "taskbar_pins": None,       # seeded from Windows' own pinned apps on first use
 }
 

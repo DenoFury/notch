@@ -94,6 +94,10 @@ class Taskbar(QWidget):
         self._preview_timer = QTimer(self, singleShot=True, interval=420, timeout=self._show_preview)
         self.preview = None
         self._appbar = False
+        self._slide = 0.0          # how far the bar has slid down out of view (auto-hide)
+        self._hidden = False
+        self._cover = QTimer(self, interval=1000, timeout=self._check_cover)
+        self._hide_later = QTimer(self, singleShot=True, interval=700, timeout=self._check_cover)
         self._minute = QTimer(self, singleShot=True, timeout=self._tick_minute)
         self.tray_apps = []
         self._tray_key = None
@@ -175,8 +179,52 @@ class Taskbar(QWidget):
             QTimer.singleShot(1500, self.app.taskbar_hider.apply)
 
     def showEvent(self, e):
-        self.register_appbar()
+        self._apply_space()
         hide_from_capture(self, self.st["hide_from_capture"])
+
+    # ------------------------------------------------------------ space for windows / auto-hide
+    def _apply_space(self):
+        mode = self.st["taskbar_space"]
+        if mode == "reserve":
+            self.register_appbar()
+        else:
+            self.unregister_appbar()          # maximised windows get the whole screen
+        if mode == "autohide":
+            self._cover.start()
+            self._check_cover()
+        else:
+            self._cover.stop()
+            self._set_hidden(False)
+
+    def _monitor_origin(self):
+        mi = MONITORINFO()
+        mi.cbSize = ctypes.sizeof(MONITORINFO)
+        user32.GetMonitorInfoW(self.monitor(), ctypes.byref(mi))
+        return mi.rcMonitor.left, mi.rcMonitor.top
+
+    def _check_cover(self):
+        """Auto-hide: slide away while a window fills this screen, unless the pointer is on the bar."""
+        if self.st["taskbar_space"] != "autohide":
+            return
+        busy = (self._hover_x is not None
+                or (self._flyout is not None and self._flyout.isVisible())
+                or (self.preview is not None and self.preview.isVisible())
+                or self.geometry().contains(QCursor.pos()))     # the pointer is on (or just above) the bar
+        if busy:
+            return
+        from .desktop import covered_screens
+        self._set_hidden(self._monitor_origin() in covered_screens())
+
+    def _set_hidden(self, hidden):
+        if hidden != self._hidden:
+            self._hidden = hidden
+            if hidden and self.preview:
+                self.preview.hide_now()
+            self._start_anim()
+
+    def _reveal(self):
+        self._hide_later.stop()
+        self._set_hidden(False)
 
     def closeEvent(self, e):
         self.unregister_appbar()
@@ -287,6 +335,8 @@ class Taskbar(QWidget):
     def _on_setting(self, key):
         if key == "hide_from_capture":
             return hide_from_capture(self, self.st[key])
+        if key == "taskbar_space":
+            return self._apply_space()
         if key in ("taskbar_scale",):
             self.place()
             self.unregister_appbar()
@@ -320,6 +370,12 @@ class Taskbar(QWidget):
                 moving = True
             else:
                 it.scale = target
+        slide_to = self.S(BAR_H) + 6 if self._hidden else 0.0
+        if abs(slide_to - self._slide) > 0.4:
+            self._slide += (slide_to - self._slide) * k
+            moving = True
+        else:
+            self._slide = slide_to
         tw = self._target_width()
         if abs(tw - self._bar_w) > 0.3:
             self._bar_w += (tw - self._bar_w) * k
@@ -333,7 +389,7 @@ class Taskbar(QWidget):
     # ------------------------------------------------------------ layout helpers
     def bar_rect(self):
         h = self.S(BAR_H)
-        return QRectF((self.width() - self._bar_w) / 2, self.height() - h, self._bar_w, h)
+        return QRectF((self.width() - self._bar_w) / 2, self.height() - h + self._slide, self._bar_w, h)
 
     def _layout(self):
         r = self.bar_rect()
@@ -351,8 +407,15 @@ class Taskbar(QWidget):
         return None
 
     # ------------------------------------------------------------ input
+    def enterEvent(self, e):
+        self._hide_later.stop()
+        if self._hidden:
+            self._reveal()
+
     def mouseMoveEvent(self, e):
         p = e.position()
+        if self._hidden:
+            return self._reveal()
         if not self.bar_rect().adjusted(0, -self.S(HEADROOM), 0, 0).contains(p):
             return self.leaveEvent(None)
         self._hover_x = p.x()
@@ -375,6 +438,8 @@ class Taskbar(QWidget):
         self._start_anim()
 
     def leaveEvent(self, e):
+        if self.st["taskbar_space"] == "autohide" and e is not None:
+            self._hide_later.start()
         self._hover_x = None
         self._hover_item = None
         self._preview_timer.stop()
@@ -497,6 +562,10 @@ class Taskbar(QWidget):
     def paintEvent(self, _):
         self._layout()
         p = QPainter(self)
+        if self._hidden and self._slide >= self.S(BAR_H):
+            r = self.bar_rect()
+            p.fillRect(QRectF(r.left(), self.height() - 3, r.width(), 3), QColor(0, 0, 0, 1))
+            return
         p.setRenderHint(QPainter.Antialiasing)
         p.setRenderHint(QPainter.SmoothPixmapTransform)
         bg, fg, dim, line = self.surface()
